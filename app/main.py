@@ -15,7 +15,13 @@ app = FastAPI(title="Project and Bug Tracker",version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with specific origins like ["http://localhost:5173"]
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://bugtrackerfrontend.vercel.app",
+        "https://bug-tracker-frontend.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
