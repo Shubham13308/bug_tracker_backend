@@ -12,14 +12,15 @@ load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
 if not MONGO_URL:
-    raise RuntimeError("MONGO_URL environment variable not found.")
+    raise RuntimeError("MONGO_URL environment variable not found in environment.")
 
 try:
     client = MongoClient(MONGO_URL)
     client.admin.command("ping")
     print("MongoDB connected successfully!")
 except Exception as e:
-    raise RuntimeError(f"Failed to connect to MongoDB: {e}")
+    print(f"Failed to connect to MongoDB: {e}")
+    client = MongoClient(MONGO_URL)
 
 db = client["bug_tracker"]
 
@@ -37,32 +38,38 @@ def create_indexes():
             name="refresh_token_ttl"
         )
     except OperationFailure as e:
-        # Code 85 is IndexOptionsConflict
         if e.code == 85:
-            print("Dropping old index and recreating with new options...")
-            refresh_tokens_collection.drop_index("expires_at_1")
-            refresh_tokens_collection.create_index(
-                [("expires_at", 1)],
-                expireAfterSeconds=0,
-                name="refresh_token_ttl"
-            )
+            try:
+                refresh_tokens_collection.drop_index("expires_at_1")
+                refresh_tokens_collection.create_index(
+                    [("expires_at", 1)],
+                    expireAfterSeconds=0,
+                    name="refresh_token_ttl"
+                )
+            except Exception as drop_err:
+                print(f"Index recreation notice: {drop_err}")
         else:
-            raise
+            print(f"Index creation warning: {e}")
+    except Exception as general_err:
+        print(f"Index creation notice: {general_err}")
 
-    # Projects indexes
-    projects_collection.create_index([("key", 1)], unique=True)
-    projects_collection.create_index([("name", 1)])
-    projects_collection.create_index([("status", 1)])
+    try:
+        projects_collection.create_index([("key", 1)], unique=True)
+        projects_collection.create_index([("name", 1)])
+        projects_collection.create_index([("status", 1)])
 
-    # Issues indexes
-    issues_collection.create_index([("issue_key", 1)], unique=True)
-    issues_collection.create_index([("title", 1)])
-    issues_collection.create_index([("project_id", 1)])
-    issues_collection.create_index([("status", 1)])
-    issues_collection.create_index([("priority", 1)])
-    issues_collection.create_index([("assignee_id", 1)])
-    issues_collection.create_index([("reporter_id", 1)])
-    issues_collection.create_index([("issue_type", 1)])
+        issues_collection.create_index([("issue_key", 1)], unique=True)
+        issues_collection.create_index([("title", 1)])
+        issues_collection.create_index([("project_id", 1)])
+        issues_collection.create_index([("status", 1)])
+        issues_collection.create_index([("priority", 1)])
+        issues_collection.create_index([("assignee_id", 1)])
+        issues_collection.create_index([("reporter_id", 1)])
+        issues_collection.create_index([("issue_type", 1)])
+    except Exception as idx_err:
+        print(f"Indexes creation warning: {idx_err}")
 
-
-create_indexes()
+try:
+    create_indexes()
+except Exception as e:
+    print(f"Non-fatal index creation warning: {e}")
