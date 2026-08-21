@@ -1,5 +1,5 @@
 import os
-
+import certifi
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
@@ -11,18 +11,33 @@ load_dotenv()
 
 MONGO_URL = os.getenv("MONGO_URL")
 
-import certifi
-
 if not MONGO_URL:
     raise RuntimeError("MONGO_URL environment variable not found in environment.")
 
 try:
-    client = MongoClient(MONGO_URL, tlsCAFile=certifi.where())
+    # Serverless-friendly TLS connection with certifi CA bundle and 5s timeout
+    client = MongoClient(
+        MONGO_URL,
+        tls=True,
+        tlsCAFile=certifi.where(),
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=5000,
+    )
     client.admin.command("ping")
     print("MongoDB connected successfully with certifi TLS!")
 except Exception as e:
     print(f"Primary certifi TLS connection notice: {e}")
-    client = MongoClient(MONGO_URL)
+    try:
+        client = MongoClient(
+            MONGO_URL,
+            tlsAllowInvalidCertificates=True,
+            serverSelectionTimeoutMS=5000,
+        )
+        client.admin.command("ping")
+        print("MongoDB connected with tlsAllowInvalidCertificates fallback!")
+    except Exception as e2:
+        print(f"Fallback MongoDB connection notice: {e2}")
+        client = MongoClient(MONGO_URL)
 
 db = client["bug_tracker"]
 
