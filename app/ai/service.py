@@ -23,10 +23,7 @@ load_dotenv(find_dotenv())
 
 api_key = os.getenv("GEMINI_API_KEY")
 
-if not api_key:
-    raise RuntimeError("GEMINI_API_KEY is not configured")
-
-client = genai.Client(api_key=api_key)
+client = genai.Client(api_key=api_key) if api_key else None
 
 
 def understand_search_query(query: str) -> AISearchIntent:
@@ -34,6 +31,9 @@ def understand_search_query(query: str) -> AISearchIntent:
     Call Gemini API to convert natural language prompt into a structured intent JSON.
     Used for debug/internal testing.
     """
+    if not client:
+        return AISearchIntent(entity="project", search_text=query)
+
     response = client.models.generate_content(
         model="gemini-3.6-flash",
         contents=[

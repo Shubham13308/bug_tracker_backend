@@ -12,19 +12,17 @@ password_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto"
 )
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-ALGORITHM = os.getenv("JWT_ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES",15))
-REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS",7))
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY") or "default_jwt_secret_key_change_in_production"
+ALGORITHM = os.getenv("JWT_ALGORITHM") or os.getenv("ALGORITHM") or "HS256"
+try:
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
+except ValueError:
+    ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY environment variable is not set")
-if not ALGORITHM:
-    raise ValueError("ALGORITHM environment variable is not set")
-if not ACCESS_TOKEN_EXPIRE_MINUTES:
-    raise ValueError("ACCESS_TOKEN_EXPIRE_MINUTES environment variable is not set")
-if not REFRESH_TOKEN_EXPIRE_DAYS:
-    raise ValueError("REFRESH_TOKEN_EXPIRE_DAYS environment variable is not set")
+try:
+    REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+except ValueError:
+    REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 def hash_password(password: str) -> str:
     return password_context.hash(password)
