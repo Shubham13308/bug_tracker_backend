@@ -32,10 +32,16 @@ def verify_password(
     plain_password: str,
     hashed_password: str
 ) -> bool:
-    return password_context.verify(
-        plain_password,
-        hashed_password
-    )
+    try:
+        if not plain_password or not hashed_password:
+            return False
+        return password_context.verify(
+            plain_password,
+            hashed_password
+        )
+    except Exception as e:
+        print(f"Password verification exception: {e}")
+        return False
 
 def create_access_token(user_id:str)-> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

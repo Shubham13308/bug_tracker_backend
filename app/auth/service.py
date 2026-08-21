@@ -26,13 +26,13 @@ def login_user(
 
     user = get_user_by_email(email)
 
-    if (
-        not user or
-        not verify_password(
-            login_request.password,
-            user["password"]
+    if not user or not user.get("password"):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials"
         )
-    ):
+
+    if not verify_password(login_request.password, user["password"]):
         raise HTTPException(
             status_code=401,
             detail="Invalid credentials"
