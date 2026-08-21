@@ -11,15 +11,17 @@ load_dotenv()
 
 MONGO_URL = os.getenv("MONGO_URL")
 
+import certifi
+
 if not MONGO_URL:
     raise RuntimeError("MONGO_URL environment variable not found in environment.")
 
 try:
-    client = MongoClient(MONGO_URL)
+    client = MongoClient(MONGO_URL, tlsCAFile=certifi.where())
     client.admin.command("ping")
-    print("MongoDB connected successfully!")
+    print("MongoDB connected successfully with certifi TLS!")
 except Exception as e:
-    print(f"Failed to connect to MongoDB: {e}")
+    print(f"Primary certifi TLS connection notice: {e}")
     client = MongoClient(MONGO_URL)
 
 db = client["bug_tracker"]
